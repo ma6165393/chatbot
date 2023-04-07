@@ -1,0 +1,84 @@
+
+#include <iostream>
+#include <string>
+#include <map>
+#include <vector>
+
+using namespace std;
+
+// Define a map to hold training data
+map<vector<string>, string> trainingData;
+
+// Define a map to hold responses
+map<vector<string>, string> responses;
+
+// Split a string into tokens
+vector<string> tokenize(string str) {
+    vector<string> tokens;
+    string token;
+    for (char c : str) {
+        if (c == ' ') {
+            tokens.push_back(token);
+            token = "";
+        } else {
+            token += c;
+        }
+    }
+    tokens.push_back(token);
+    return tokens;
+}
+
+// Train the chatbot on some input/output pairs
+void train(vector<string> input, string output) {
+    trainingData[input] = output;
+    for (int i = 0; i < input.size(); ++i) {
+        for (int j = i + 1; j <= input.size(); ++j) {
+            vector<string> subseq(input.begin() + i, input.begin() + j);
+            if (responses.find(subseq) == responses.end()) {
+                responses[subseq] = output;
+            }
+        }
+    }
+}
+
+// Get a response from the chatbot
+string respond(string input) {
+    vector<string> tokens = tokenize(input);
+    if (trainingData.find(tokens) != trainingData.end()) {
+        return trainingData[tokens];
+    }
+    for (int i = tokens.size(); i > 0; --i) {
+        for (int j = 0; j <= tokens.size() - i; ++j) {
+            vector<string> subseq(tokens.begin() + j, tokens.begin() + j + i);
+            if (responses.find(subseq) != responses.end()) {
+                return responses[subseq];
+            }
+        }
+    }
+    return "I'm sorry, I didn't understand. Can you rephrase your question?";
+}
+
+int main() {
+    // Train the chatbot on some input/output pairs
+    train({"مرحبا", "ازيك", "اهلا", "جارفيس"}, "مرحبا سيدي أنا في خدمتك");
+    train({"اسمك", "ايه", "اسمك", "ما"}, "أنا جارفيس.");
+
+ train({"عامل", "اية", "أنت","كويس"}, "أنا بخير ، شكرًا لك.");
+    train({"ماذا", "يمكن", "أنت", "تفعل"}, "يمكنني مساعدتك في أي شئ .");
+    train({"شكرا", "لك"}, "على الرحب والسعة!");
+
+    // Start a conversation with the chatbot
+    string input;
+    while (true) {
+        cout << "أنت: ";
+        getline(cin, input);
+        if (input == "exit") {
+            break;
+        }
+        string response = respond(input);
+        cout << "جارفيس: " << response << endl;
+        train(tokenize(input), response);
+    }
+    
+    return 0;
+}
